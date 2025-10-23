@@ -1,0 +1,5 @@
+{
+  "name": "Mustafa Emrish - Personal Portfolio",
+  "description": "An interactive personal portfolio for Mustafa Ahed Emrish, showcasing expertise in web development, applications, and artificial intelligence. The site includes interactive games and an AI-powered chatbot.",
+  "requestFramePermissions": ["microphone"]
+}
