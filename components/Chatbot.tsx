@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 
 import type { Message, QA } from '../types';
+import { DEFAULT_SUGGESTIONS, detectTopic, getSuggestionsForTopic, getTopicLabel } from '../data/chatbotTopics';
+import { getRandomInteractiveQuestion } from '../data/interactiveQuestions';
 
 interface ChatbotProps {
     onClose: () => void;
@@ -38,8 +40,22 @@ const Chatbot: React.FC<ChatbotProps> = ({ onClose }) => {
     
     const [isRecording, setIsRecording] = useState(false);
     const [micError, setMicError] = useState<string | null>(null);
+    const [suggestedQuestions, setSuggestedQuestions] = useState<string[]>(() => DEFAULT_SUGGESTIONS);
+    const [activeTopic, setActiveTopic] = useState<string>('general');
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const recognitionRef = useRef<SpeechRecognition | null>(null);
+
+    const updateSuggestions = (topicId?: string | null) => {
+        const requestedTopic = topicId ?? 'general';
+        const generalLabel = getTopicLabel('general');
+        const requestedLabel = getTopicLabel(requestedTopic);
+        const resolvedTopic = requestedLabel === generalLabel && requestedTopic !== 'general' ? 'general' : requestedTopic;
+
+        setActiveTopic(resolvedTopic);
+        setSuggestedQuestions(getSuggestionsForTopic(resolvedTopic));
+    };
+
+    const topicLabel = getTopicLabel(activeTopic);
 
     useEffect(() => {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -87,17 +103,22 @@ const Chatbot: React.FC<ChatbotProps> = ({ onClose }) => {
         ]);
     }, []);
 
-    const handleSendMessage = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!userInput.trim() || isLoading) return;
+    useEffect(() => {
+        updateSuggestions('general');
+    }, []);
 
-        const userMessage: Message = { sender: 'user', text: userInput };
+    const processUserMessage = async (input: string) => {
+        if (isLoading) return;
+        const trimmedInput = input.trim();
+        if (!trimmedInput) return;
+
+        const userMessage: Message = { sender: 'user', text: trimmedInput };
         setMessages(prev => [...prev, userMessage]);
-        const searchTerm = userInput.toLowerCase().trim();
+        const searchTerm = trimmedInput.toLowerCase();
         setUserInput('');
         setIsLoading(true);
 
-        console.log('Processing question:', userInput);
+        console.log('Processing question:', trimmedInput);
         console.log('Search term:', searchTerm);
 
        // تجاهل استدعاء API الخارجي والاعتماد على المنطق المحلي مباشرة
@@ -229,7 +250,23 @@ console.log('Using local logic for weather and prayer times');
         else if (searchTerm.includes('بتحبني') || searchTerm.includes('تحبني') || searchTerm.includes('تحبني') || searchTerm.includes('تحبني')) {
             botResponseText = 'بالطبع أحبك! 😍💕 أنت صديق عزيز لمصطفى وأنا سعيد لخدمتك! كيف يمكنني أساعدك أكثر؟ 🤗✨';
         }
-        
+
+        else if (
+            searchTerm.includes('لعبة') ||
+            searchTerm.includes('ألعاب') ||
+            searchTerm.includes('نلعب') ||
+            searchTerm.includes('لغز') ||
+            searchTerm.includes('ألغاز') ||
+            searchTerm.includes('تحدي') ||
+            searchTerm.includes('سؤال تفاعلي') ||
+            searchTerm.includes('صاحبي') ||
+            searchTerm.includes('حبيبي') ||
+            searchTerm.includes('game')
+        ) {
+            const interactivePrompt = getRandomInteractiveQuestion();
+            botResponseText = `يلا نلعب وننبسط! 🎮✨\n${interactivePrompt}\nجاوبني وخلي اللعبة أحلى معانا! 🤗💕`;
+        }
+
         // الهكر والاختراق
         else if (searchTerm.includes('هكر') || searchTerm.includes('اختراق') || searchTerm.includes('هاكر') || searchTerm.includes('هاكرز')) {
             botResponseText = 'الهكر هو شخص متخصص في البرمجة والأمن السيبراني 💻🔓. مصطفى متخصص في الاختراق الأخلاقي لحماية الأنظمة من الهجمات الضارة 🛡️⚡. هل تريد معرفة المزيد عن الحماية؟';
@@ -868,6 +905,8 @@ console.log('Using local logic for weather and prayer times');
 
         if (botResponseText) {
             console.log('Found priority answer:', botResponseText);
+            const matchedTopic = detectTopic(searchTerm);
+            updateSuggestions(matchedTopic);
             const botMessage: Message = { sender: 'bot', text: botResponseText };
             setMessages(prev => [...prev, botMessage]);
             setIsLoading(false);
@@ -934,14 +973,17 @@ console.log('Using local logic for weather and prayer times');
                 // Use the first (most relevant) result
                 const bestMatch = searchResults[0];
                 console.log('Found chunk answer:', bestMatch.answer);
+                const candidateTopic = bestMatch.category ?? detectTopic(bestMatch.question ?? searchTerm);
+                updateSuggestions(candidateTopic);
                 const botMessage: Message = { sender: 'bot', text: bestMatch.answer };
                 setMessages(prev => [...prev, botMessage]);
             } else {
                 console.log('No chunk answer found, using fallback');
                 // Enhanced fallback with suggestions focused on personal info
-            const fallbackMessage: Message = { 
-                    sender: 'bot', 
-                    text: `عذرًا، لم أجد إجابة مباشرة على سؤالك "${userInput}" 😅. يمكنك السؤال عن:\n• معلومات شخصية عن مصطفى أمريش 👨‍💻\n• كيف اتعلم البرمجة أو الأمن السيبراني 💻🔐\n• كيف احمي جهازي وعائلتي 🛡️👨‍👩‍👧‍👦\n• كيف اصير مبرمج أو هكر اخلاقي 🚀⚡\n• الذكاء الاصطناعي والـ AI 🤖🧠\n• حالة الطقس ومواقيت الصلاة 🌤️🕌\n• أسئلة تفاعلية فلسطينية حلوة 😊💕` 
+                updateSuggestions('general');
+                const fallbackMessage: Message = {
+                    sender: 'bot',
+                    text: `عذرًا، لم أجد إجابة مباشرة على سؤالك "${trimmedInput}" 😅. يمكنك السؤال عن:\n• معلومات شخصية عن مصطفى أمريش 👨‍💻\n• كيف اتعلم البرمجة أو الأمن السيبراني 💻🔐\n• كيف احمي جهازي وعائلتي 🛡️👨‍👩‍👧‍👦\n• كيف اصير مبرمج أو هكر اخلاقي 🚀⚡\n• الذكاء الاصطناعي والـ AI 🤖🧠\n• حالة الطقس ومواقيت الصلاة 🌤️🕌\n• أسئلة تفاعلية فلسطينية حلوة 😊💕`
                 };
                 setMessages(prev => [...prev, fallbackMessage]);
             }
@@ -955,6 +997,17 @@ console.log('Using local logic for weather and prayer times');
         }
 
         setIsLoading(false);
+    };
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!userInput.trim()) return;
+        void processUserMessage(userInput);
+    };
+
+    const handleSuggestionClick = (question: string) => {
+        if (isLoading) return;
+        void processUserMessage(question);
     };
 
     const handleMicClick = () => {
@@ -1010,8 +1063,27 @@ console.log('Using local logic for weather and prayer times');
                     <div ref={messagesEndRef} />
                 </div>
 
-                <div className="p-4 border-t border-gray-700">
-                    <form onSubmit={handleSendMessage} className="flex items-center space-x-2 rtl:space-x-reverse">
+                <div className="p-4 border-t border-gray-700 space-y-4">
+                    {suggestedQuestions.length > 0 && (
+                        <div>
+                            <p className="text-xs text-gray-400 mb-2">اقتراحات سريعة ({topicLabel})</p>
+                            <div className="flex flex-wrap gap-2">
+                                {suggestedQuestions.map((question) => (
+                                    <button
+                                        key={question}
+                                        type="button"
+                                        onClick={() => handleSuggestionClick(question)}
+                                        className="bg-gray-800 border border-cyan-600/40 hover:border-cyan-400 text-xs md:text-sm text-gray-200 px-3 py-2 rounded-full transition-colors duration-200"
+                                        disabled={isLoading}
+                                    >
+                                        {question}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    <form onSubmit={handleSubmit} className="flex items-center space-x-2 rtl:space-x-reverse">
                         <input
                             type="text"
                             value={userInput}
