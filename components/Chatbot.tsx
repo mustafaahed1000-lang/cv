@@ -1,11 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 
 import type { Message, QA } from '../types';
-import { DEFAULT_SUGGESTIONS, detectTopic, getSuggestionsForTopic, getTopicLabel } from '../data/chatbotTopics';
+import { DEFAULT_SUGGESTIONS, detectTopic, getSuggestionsForTopic, getTopicLabel, normalizeText } from '../data/chatbotTopics';
 import { getRandomInteractiveQuestion } from '../data/interactiveQuestions';
 
 interface ChatbotProps {
     onClose: () => void;
+}
+
+interface RankedMatch {
+    qa: QA;
+    score: number;
 }
 
 // FIX: Add type definitions for the Web Speech API to resolve TypeScript errors.
@@ -115,11 +120,14 @@ const Chatbot: React.FC<ChatbotProps> = ({ onClose }) => {
         const userMessage: Message = { sender: 'user', text: trimmedInput };
         setMessages(prev => [...prev, userMessage]);
         const searchTerm = trimmedInput.toLowerCase();
+        const normalizedSearch = normalizeText(trimmedInput) || searchTerm;
+        const searchTokens = new Set(normalizedSearch.split(' ').filter((token) => token.length > 2));
         setUserInput('');
         setIsLoading(true);
 
         console.log('Processing question:', trimmedInput);
         console.log('Search term:', searchTerm);
+        console.log('Normalized term:', normalizedSearch);
 
        // تجاهل استدعاء API الخارجي والاعتماد على المنطق المحلي مباشرة
 // هذا يضمن أن حالة الطقس ومواقيت الصلاة تعمل دائماً
@@ -905,7 +913,7 @@ console.log('Using local logic for weather and prayer times');
 
         if (botResponseText) {
             console.log('Found priority answer:', botResponseText);
-            const matchedTopic = detectTopic(searchTerm);
+            const matchedTopic = detectTopic(trimmedInput);
             updateSuggestions(matchedTopic);
             const botMessage: Message = { sender: 'bot', text: botResponseText };
             setMessages(prev => [...prev, botMessage]);
@@ -919,14 +927,34 @@ console.log('Using local logic for weather and prayer times');
         const BATCH_SIZE = 10; // Reduced batch size for better performance
         const CHUNK_COUNT = 181;
         let foundAnswer = false;
-        let searchResults: QA[] = [];
+        let searchResults: RankedMatch[] = [];
+
+        const scoreNormalized = (normalizedCandidate: string) => {
+            if (!normalizedCandidate) {
+                return 0;
+            }
+
+            let score = 0;
+
+            if (normalizedCandidate.includes(normalizedSearch)) {
+                score += searchTokens.size + 3;
+            }
+
+            searchTokens.forEach((token) => {
+                if (normalizedCandidate.includes(token)) {
+                    score += token.length >= 6 ? 2 : 1;
+                }
+            });
+
+            return score;
+        };
 
         try {
             // Search through chunks with better error handling
-        for (let i = 0; i < CHUNK_COUNT; i += BATCH_SIZE) {
-            const batch = Array.from({ length: Math.min(BATCH_SIZE, CHUNK_COUNT - i) }, (_, j) => i + j + 1);
+            for (let i = 0; i < CHUNK_COUNT; i += BATCH_SIZE) {
+                const batch = Array.from({ length: Math.min(BATCH_SIZE, CHUNK_COUNT - i) }, (_, j) => i + j + 1);
 
-                const promises = batch.map(async (chunkIndex) => {
+                const promises = batch.map(async (chunkIndex): Promise<RankedMatch[]> => {
                     try {
                         const response = await fetch(`/data/chunk-${chunkIndex}.json`);
                         if (!response.ok) {
@@ -934,20 +962,36 @@ console.log('Using local logic for weather and prayer times');
                             return [];
                         }
                         const chunk: QA[] = await response.json();
-                        
-                        // More flexible search - check both question and answer
-                        const matches = chunk.filter(qa => 
-                            qa.question.toLowerCase().includes(searchTerm) ||
-                            qa.answer.toLowerCase().includes(searchTerm) ||
-                            // Check for partial word matches
-                            searchTerm.split(' ').some(word => 
-                                qa.question.toLowerCase().includes(word) ||
-                                qa.answer.toLowerCase().includes(word)
-                            )
-                        );
-                        
+
+                        // Rank matches using normalized tokens and overlaps
+                        const matches = chunk
+                            .map((qa) => {
+                                const normalizedQuestion = normalizeText(qa.question ?? '');
+                                const normalizedAnswer = normalizeText(qa.answer ?? '');
+                                const questionScore = scoreNormalized(normalizedQuestion) * 1.2;
+                                const answerScore = scoreNormalized(normalizedAnswer) * 0.6;
+                                let combinedScore = questionScore + answerScore;
+
+                                if (normalizedQuestion && normalizedSearch && normalizedQuestion.startsWith(normalizedSearch)) {
+                                    combinedScore += 2;
+                                }
+
+                                if (qa.question && qa.question.toLowerCase().includes(searchTerm)) {
+                                    combinedScore += 1;
+                                }
+
+                                if (combinedScore > 0) {
+                                    return { qa, score: combinedScore };
+                                }
+
+                                return null;
+                            })
+                            .filter((entry): entry is RankedMatch => Boolean(entry))
+                            .sort((a, b) => b.score - a.score)
+                            .slice(0, 3);
+
                         return matches;
-            } catch (error) {
+                    } catch (error) {
                         console.warn(`Error loading chunk ${chunkIndex}:`, error);
                         return [];
                     }
@@ -970,10 +1014,11 @@ console.log('Using local logic for weather and prayer times');
             }
 
             if (foundAnswer && searchResults.length > 0) {
-                // Use the first (most relevant) result
-                const bestMatch = searchResults[0];
+                // Use the highest ranked result
+                searchResults.sort((a, b) => b.score - a.score);
+                const bestMatch = searchResults[0].qa;
                 console.log('Found chunk answer:', bestMatch.answer);
-                const candidateTopic = bestMatch.category ?? detectTopic(bestMatch.question ?? searchTerm);
+                const candidateTopic = bestMatch.category ?? detectTopic(bestMatch.question ?? trimmedInput);
                 updateSuggestions(candidateTopic);
                 const botMessage: Message = { sender: 'bot', text: bestMatch.answer };
                 setMessages(prev => [...prev, botMessage]);

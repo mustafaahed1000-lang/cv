@@ -7,6 +7,68 @@ export interface TopicConfig {
     suggestions: string[];
 }
 
+const LETTER_NORMALIZATION_RULES: Array<[RegExp, string]> = [
+    [/[أإآ]/g, 'ا'],
+    [/ة/g, 'ه'],
+    [/ى/g, 'ي'],
+    [/ؤ/g, 'و'],
+    [/ئ/g, 'ي'],
+    [/ٱ/g, 'ا'],
+    [/ً|ٌ|ٍ|َ|ُ|ِ|ّ|ْ/g, '']
+];
+
+const WORD_REPLACEMENTS = new Map<string, string>([
+    ['سايبر', 'سيبراني'],
+    ['سايبرسكيورتي', 'الامن السيبراني'],
+    ['سايبر-سكيورتي', 'الامن السيبراني'],
+    ['سايبر سكيورتي', 'الامن السيبراني'],
+    ['سيكيورتي', 'سيبراني'],
+    ['سيكيوريتي', 'سيبراني'],
+    ['امان', 'امن'],
+    ['امنيه', 'امنية'],
+    ['هكرز', 'هكر'],
+    ['هاكرز', 'هكر'],
+    ['هاكر', 'هكر'],
+    ['اختراقات', 'اختراق'],
+    ['برمجه', 'برمجة'],
+    ['كودينج', 'كود'],
+    ['coding', 'كود'],
+    ['برمجيات', 'برمجة'],
+    ['سوفتوير', 'سوفت وير'],
+    ['سوفت-وير', 'سوفت وير'],
+    ['tech', 'تكنولوجيا'],
+    ['تكنلوجيا', 'تكنولوجيا'],
+    ['التكنلوجيا', 'التكنولوجيا'],
+    ['ديجيتال', 'رقمي'],
+    ['تشات', 'شات'],
+    ['شاتجيبيتي', 'شات جي بي تي'],
+    ['chatgpt', 'شات جي بي تي']
+]);
+
+export const normalizeText = (value: string) => {
+    if (!value) {
+        return '';
+    }
+
+    let normalized = value.toLowerCase();
+    normalized = normalized.normalize('NFKD');
+
+    for (const [pattern, replacement] of LETTER_NORMALIZATION_RULES) {
+        normalized = normalized.replace(pattern, replacement);
+    }
+
+    normalized = normalized.replace(/[^\p{L}\p{N}\s]/gu, ' ');
+    normalized = normalized.replace(/\s+/g, ' ').trim();
+
+    if (!normalized) {
+        return '';
+    }
+
+    const tokens = normalized.split(' ');
+    const replacedTokens = tokens.map((token) => WORD_REPLACEMENTS.get(token) ?? token);
+    return replacedTokens.join(' ');
+};
+
 const TOPIC_CONFIGS: TopicConfig[] = [
     {
         id: 'cybersecurity',
@@ -16,6 +78,9 @@ const TOPIC_CONFIGS: TopicConfig[] = [
             'امن سبراني',
             'أمن سبراني',
             'سيبراني',
+            'سايبر',
+            'سايبر سكيورتي',
+            'سايبرسكيورتي',
             'cybersecurity',
             'security',
             'cyber',
@@ -23,6 +88,11 @@ const TOPIC_CONFIGS: TopicConfig[] = [
             'هاكر',
             'اختراق',
             'اختراق اخلاقي',
+            'infosec',
+            'information security',
+            'امن معلومات',
+            'أمن معلومات',
+            'حماية معلومات',
             'ddos',
             'dark web',
             'ديب ويب',
@@ -82,7 +152,15 @@ const TOPIC_CONFIGS: TopicConfig[] = [
             'ما خطوات بناء برنامج Bug Bounty ناجح للموقع؟',
             'كيف أراقب الدارك ويب عن أي تسريب يخص شركتي؟',
             'شو الطرق السريعة للكشف عن أجهزة مزروعة على الشبكة؟',
-            'كيف أستخدم هندسة العدو Purple Teaming لتحسين الدفاع؟'
+            'كيف أستخدم هندسة العدو Purple Teaming لتحسين الدفاع؟',
+            'شو يعني الأمن السيبراني وكيف أحمي حالي بطرق بسيطة؟',
+            'ايش يعني سايبر سكيورتي باللهجة الفلسطينية؟',
+            'كيف أتعلم تحليل الثغرات خطوة بخطوة من البيت؟',
+            'شو أفضل قنوات يوتيوب عربية بتشرح الأمن السيبراني؟',
+            'كيف أشرح لعيلتي الفرق بين الهكر الأخلاقي والهكر الخبيث؟',
+            'كيف أتعامل مع رسائل التصيد اللي توصلني على الإيميل؟',
+            'شو الخطوات العملية لتأمين شركة ناشئة صغيرة؟',
+            'كيف أعمل خطة استجابة لحوادث فيشينج مع فريقي؟'
         ]
     },
     {
@@ -93,12 +171,19 @@ const TOPIC_CONFIGS: TopicConfig[] = [
             'مبرمج',
             'كود',
             'coding',
+            'كودنج',
             'javascript',
             'react',
             'تطوير',
             'مشروع برمجي',
             'تطبيق',
-            'مطور'
+            'مطور',
+            'سوفت وير',
+            'software',
+            'مهندس برمجيات',
+            'software engineer',
+            'تطوير برمجيات',
+            'dev'
         ],
         suggestions: [
             'كيف أتعلم البرمجة من الصفر؟',
@@ -143,7 +228,13 @@ const TOPIC_CONFIGS: TopicConfig[] = [
             'شو الطرق السهلة لكتابة سكربتات أتمتة يومية؟',
             'كيف أستخدم GitHub Actions عشان أوثق مشروعي؟',
             'شو التحديات لما أشتغل مع فرق موزعة عن بعد؟',
-            'كيف أتعامل مع Legacy Code استلمته من فريق ثاني؟'
+            'كيف أتعامل مع Legacy Code استلمته من فريق ثاني؟',
+            'شو يعني تطوير برمجيات وكيف ببدأ فيه خطوة بخطوة؟',
+            'كيف أتعلم C++ بسرعة بدون ما أتلخبط؟',
+            'كيف أستخدم ChatGPT لمراجعة الكود وتحسينه؟',
+            'كيف أتعلم تصميم Microservices لمشروعي القادم؟',
+            'شو أفضل عادات يومية للمبرمج الناجح؟',
+            'كيف أبني شات بوت مثل ChatGPT باستخدام Node.js وReact؟'
         ]
     },
     {
@@ -233,7 +324,12 @@ const TOPIC_CONFIGS: TopicConfig[] = [
             'ai',
             'machine learning',
             'روبوت',
-            'smart'
+            'smart',
+            'شات جي بي تي',
+            'chatgpt',
+            'نماذج لغوية',
+            'llm',
+            'تعلم عميق'
         ],
         suggestions: [
             'ما هو الذكاء الاصطناعي؟',
@@ -258,7 +354,12 @@ const TOPIC_CONFIGS: TopicConfig[] = [
             'ما خطوات بناء Chatbot ذكي يشبه ChatGPT؟',
             'كيف أحمي بيانات التدريب من التسرب؟',
             'شو دور الذكاء الاصطناعي بتحليل الأمن السيبراني؟',
-            'كيف ممكن أستخدم AI لدعم ريادة الأعمال المحلية؟'
+            'كيف ممكن أستخدم AI لدعم ريادة الأعمال المحلية؟',
+            'كيف أستخدم ChatGPT في شغلي اليومي بطريقة فعالة؟',
+            'كيف أدرّب نموذج ذكاء اصطناعي يفهم اللهجة الفلسطينية؟',
+            'شو المخاطر من الاعتماد الكامل على نماذج اللغة الكبيرة؟',
+            'كيف أراقب جودة إجابات الشات بوت وأحسّنها؟',
+            'كيف أختار نموذج لغة مفتوح المصدر يناسب مشروعي؟'
         ]
     },
     {
@@ -295,7 +396,12 @@ const TOPIC_CONFIGS: TopicConfig[] = [
             'متجر إلكتروني',
             'موقع إلكتروني',
             'تصفح',
-            'منصة رقمية'
+            'منصة رقمية',
+            'اونلاين',
+            'أونلاين',
+            'digital',
+            'رقمي',
+            'رقمية'
         ],
         suggestions: [
             'كيف أستخدم الإنترنت بأمان دون ما أخسر خصوصيتي؟',
@@ -321,7 +427,11 @@ const TOPIC_CONFIGS: TopicConfig[] = [
             'كيف أتعامل مع التعليقات السلبية بطريقة محترفة؟',
             'شو الفرق بين المحتوى الفيروسي والمحتوى المستدام؟',
             'كيف أستخدم الإنترنت لدعم مبادرات مجتمعية؟',
-            'ما أفضل طرق نشر متجر إلكتروني للسوق المحلي؟'
+            'ما أفضل طرق نشر متجر إلكتروني للسوق المحلي؟',
+            'كيف أستخدم ChatGPT بطريقة آمنة على الإنترنت؟',
+            'كيف أتحكم بوقتي على السوشيال ميديا بدون ما أنقطع؟',
+            'شو أفضل طرق إدارة بصمتي الرقمية بالعربي؟',
+            'كيف أشرح لأهلي فكرة الVPN وليش مهم؟'
         ]
     },
     {
@@ -335,7 +445,8 @@ const TOPIC_CONFIGS: TopicConfig[] = [
             'onion',
             '.onion',
             'hidden wiki',
-            'darknet'
+            'darknet',
+            'دارك نت'
         ],
         suggestions: [
             'شو هو الديب ويب مقارنة بالويب العادي؟',
@@ -358,6 +469,8 @@ const TOPIC_CONFIGS: TopicConfig[] = [
             'كيف أعلّم الشباب مخاطر الدارك ويب بدون تخويف؟',
             'هل في مجتمعات تعليمية شرعية على الديب ويب؟',
             'كيف أعرف إذا رابط .onion موثوق أو احتيالي؟',
+            'شو يعني ماركت بلايس على الدارك ويب؟',
+            'كيف أميز بين خدمات مخفية شرعية ونصابة؟',
             'شو الطرق القانونية للتبليغ عن محتوى مخالف؟',
             'كيف أجهز نظام وهمي Virtual Machine قبل التصفح؟',
             'ما الخطوات لمراقبة تسريبات بيانات شركتي على الدارك ويب؟'
@@ -692,12 +805,29 @@ const TOPIC_CONFIGS: TopicConfig[] = [
             'شو رأيك نتحدى بعض بسؤال ذكاء صعب؟',
             'كيف أطلب منك نصيحة بحب بطريقة حلوة؟',
             'شو المواضيع اللي بتحب نحكي فيها لما نمل؟',
-            'كيف أشاركك خبر حلو بطريقتي الخاصة؟'
+            'كيف أشاركك خبر حلو بطريقتي الخاصة؟',
+            'كيف أسأل الشات بوت عن التكنولوجيا بطريقة سريعة؟',
+            'شو أكثر الأسئلة اللي الناس بتسألها عن ChatGPT؟',
+            'كيف أطلب منك خطة تعلم متكاملة لموضوع تقني؟',
+            'كيف أخلي الشات بوت يساعدني أراجع مشروع برمجي؟'
         ]
     }
 ];
 
 const TOPIC_MAP = new Map<string, TopicConfig>(TOPIC_CONFIGS.map((topic) => [topic.id, topic]));
+
+const TOPIC_NORMALIZED_KEYWORDS = new Map<string, string[]>(
+    TOPIC_CONFIGS.map((topic) => [
+        topic.id,
+        Array.from(
+            new Set(
+                topic.keywords
+                    .map((keyword) => normalizeText(keyword))
+                    .filter((keyword) => keyword && keyword.length > 0)
+            )
+        )
+    ])
+);
 
 const pickSuggestions = (list: string[], limit: number) => {
     const finalLimit = Math.min(limit, list.length);
@@ -730,15 +860,31 @@ export const detectTopic = (text?: string | null) => {
         return 'general';
     }
 
-    const normalized = text.toLowerCase();
+    const normalizedInput = normalizeText(text);
+    if (!normalizedInput) {
+        return 'general';
+    }
+
+    const tokens = new Set(normalizedInput.split(' ').filter(Boolean));
 
     for (const topic of TOPIC_CONFIGS) {
         if (topic.id === 'general') {
             continue;
         }
 
-        if (topic.keywords.some((keyword) => normalized.includes(keyword))) {
-            return topic.id;
+        const normalizedKeywords = TOPIC_NORMALIZED_KEYWORDS.get(topic.id) ?? [];
+        for (const keyword of normalizedKeywords) {
+            if (!keyword) {
+                continue;
+            }
+
+            if (normalizedInput.includes(keyword)) {
+                return topic.id;
+            }
+
+            if (!keyword.includes(' ') && tokens.has(keyword)) {
+                return topic.id;
+            }
         }
     }
 
