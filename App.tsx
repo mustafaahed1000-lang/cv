@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Hero from './components/Hero';
 import About from './components/About';
 import Skills from './components/Skills';
@@ -13,6 +13,24 @@ const App: React.FC = () => {
     const [isChatbotOpen, setChatbotOpen] = useState(false);
     const [isTerminalOpen, setTerminalOpen] = useState(false);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+
+    useEffect(() => {
+        // Get user's location
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    setUserLocation({
+                        latitude: position.coords.latitude,
+                        longitude: position.coords.longitude,
+                    });
+                },
+                (error) => {
+                    console.error("Error getting user location:", error);
+                }
+            );
+        }
+    }, []);
 
     const handleNavClick = (e: React.MouseEvent<HTMLElement>, targetId: string) => {
         e.preventDefault();
@@ -99,7 +117,7 @@ const App: React.FC = () => {
             </footer>
 
             <FloatingActionButton onClick={() => setChatbotOpen(true)} />
-            {isChatbotOpen && <Chatbot onClose={() => setChatbotOpen(false)} />}
+            {isChatbotOpen && <Chatbot onClose={() => setChatbotOpen(false)} userLocation={userLocation} />}
             {isTerminalOpen && <TerminalCV onClose={() => setTerminalOpen(false)} />}
         </div>
     );
