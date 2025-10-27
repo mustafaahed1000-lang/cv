@@ -122,7 +122,197 @@ const Chatbot: React.FC<ChatbotProps> = ({ onClose }) => {
         setMessages(prev => [...prev, userMessage]);
         const searchTerm = trimmedInput.toLowerCase();
         const normalizedSearch = normalizeText(trimmedInput) || searchTerm;
-        const searchTokens = new Set(normalizedSearch.split(' ').filter((token) => token.length > 2));
+        const normalizedTokens = normalizedSearch.split(' ').filter(Boolean);
+        const searchTokens = new Set(normalizedTokens.filter((token) => token.length > 1));
+        const normalizedTokenSet = new Set(normalizedTokens);
+        const normalizedTermCache = new Map<string, string>();
+
+        const normalizeTerm = (term: string) => {
+            if (!term) {
+                return '';
+            }
+
+            const cached = normalizedTermCache.get(term);
+            if (cached !== undefined) {
+                return cached;
+            }
+
+            const normalized = normalizeText(term);
+            normalizedTermCache.set(term, normalized);
+            return normalized;
+        };
+
+        const includesNormalized = (term: string) => {
+            if (!term) {
+                return false;
+            }
+
+            const normalizedTerm = normalizeTerm(term);
+            if (!normalizedTerm) {
+                return false;
+            }
+
+            if (normalizedTerm.includes(' ')) {
+                return normalizedSearch.includes(normalizedTerm);
+            }
+
+            return normalizedTokenSet.has(normalizedTerm);
+        };
+
+        const includesMixed = (term: string) => {
+            if (!term) {
+                return false;
+            }
+
+            return searchTerm.includes(term.toLowerCase()) || includesNormalized(term);
+        };
+
+        const includesAnyTerm = (terms: string[]) => terms.some((term) => includesMixed(term));
+        const includesAllTerms = (terms: string[]) => terms.every((term) => includesMixed(term));
+
+        const definitionIntents = [
+            'ما هو',
+            'ماهو',
+            'ماهي',
+            'ما هي',
+            'شو هو',
+            'شوهي',
+            'شو يعني',
+            'ايش يعني',
+            'ايش هو',
+            'اش يعني',
+            'اش هو',
+            'وش يعني',
+            'what is',
+            "what's",
+            'define',
+            'definition',
+            'تعريف',
+            'عرف',
+            'فسر',
+            'اشرح',
+            'خبرني عن',
+            'احكيلي عن'
+        ];
+
+        const cybersecurityTerms = [
+            'الأمن السيبراني',
+            'الامن السيبراني',
+            'امن سيبراني',
+            'امن سبراني',
+            'سيبراني',
+            'سبراني',
+            'سايبر',
+            'سايبري',
+            'سايبر سكيورتي',
+            'سايبرسيك',
+            'cybersecurity',
+            'cyber security',
+            'security',
+            'information security',
+            'infosec',
+            'امن معلومات',
+            'حماية معلومات',
+            'امن رقمي',
+            'امن الكتروني',
+            'تهديدات سيبرانية',
+            'digital security'
+        ];
+
+        const programmingTerms = [
+            'برمجة',
+            'مبرمج',
+            'مطور',
+            'تطوير',
+            'تطوير برمجيات',
+            'مهندس برمجيات',
+            'software engineer',
+            'software',
+            'سوفت وير',
+            'كود',
+            'كودينج',
+            'coding',
+            'code',
+            'تطوير تطبيقات',
+            'لغات برمجة',
+            'full stack',
+            'front end',
+            'backend'
+        ];
+
+        const aiTerms = [
+            'ذكاء اصطناعي',
+            'ذكاء صناعي',
+            'الذكاء الاصطناعي',
+            'ai',
+            'machine learning',
+            'تعلم الآلة',
+            'تعلّم الآلة',
+            'تعلم عميق',
+            'deep learning',
+            'روبوت',
+            'نماذج لغوية',
+            'llm',
+            'chatgpt',
+            'شات جي بي تي',
+            'gpt',
+            'ذكاء آلي'
+        ];
+
+        const hackingTerms = [
+            'هكر',
+            'هكرز',
+            'هاكر',
+            'هاكرز',
+            'اختراق',
+            'اختراقات',
+            'قرصنة',
+            'penetration',
+            'اختراق اخلاقي',
+            'هجوم سيبراني',
+            'هجمات سيبرانية',
+            'قرصان',
+            'cracker'
+        ];
+
+        const chatgptTerms = [
+            'chatgpt',
+            'chat gpt',
+            'gpt',
+            'جي بي تي',
+            'شات جي بي تي',
+            'شاتجبيتي',
+            'تشات جي بي تي',
+            'chatbot',
+            'مساعد ذكي'
+        ];
+
+        const technologyTerms = [
+            'تكنولوجيا',
+            'تكنلوجيا',
+            'تقنية',
+            'تقنيات',
+            'تقني',
+            'technologie',
+            'technology',
+            'tech',
+            'digital',
+            'رقمي'
+        ];
+
+        const isDefinitionIntent = includesAnyTerm(definitionIntents);
+        const isCybersecurityIntent = includesAnyTerm(cybersecurityTerms) || includesAllTerms(['امن', 'سيبراني']);
+        const isProgrammingIntent = includesAnyTerm(programmingTerms);
+        const isAIIntent = includesAnyTerm(aiTerms);
+        const isHackingIntent = includesAnyTerm(hackingTerms);
+        const mentionsChatGPT = includesAnyTerm(chatgptTerms);
+        const isTechnologyIntent = includesAnyTerm(technologyTerms);
+
+        const cybersecurityDefinitionResponse = 'الأمن السيبراني هو حماية الأنظمة والشبكات والبرامج من الهجمات الرقمية 🛡️🔒. مصطفى متخصص في الأمن السيبراني ويقدم خدمات الاختراق الأخلاقي وفحص الثغرات الأمنية 🔍⚡';
+        const programmingDefinitionResponse = 'البرمجة هي عملية كتابة تعليمات للحاسوب لتنفيذ مهام معينة 💻✨. مصطفى متخصص في لغات البرمجة المختلفة مثل JavaScript, Python, React وغيرها من التقنيات الحديثة 🚀⚡';
+        const aiDefinitionResponse = 'الذكاء الاصطناعي (AI) 🤖🧠:\n• هو محاكاة الذكاء البشري في الآلات 💻\n• يتعلم ويتحسن من التجربة 📈\n• يستخدم في التطبيقات الذكية 📱\n• يساعد في اتخاذ القرارات 🎯\n• يبسط المهام المعقدة ⚡\n• المستقبل للذكاء الاصطناعي! 🚀\n• مصطفى متخصص في تطوير تطبيقات AI! 💪✨';
+        const hackingDefinitionResponse = 'الهكر هو شخص متخصص في البرمجة والأمن السيبراني 💻🔓. مصطفى متخصص في الاختراق الأخلاقي لحماية الأنظمة من الهجمات الضارة 🛡️⚡. هل تريد معرفة المزيد عن الحماية؟';
+        const technologyDefinitionResponse = 'التكنولوجيا هي توظيف العلم والأدوات لتحسين حياتنا اليومية 💡💻. تشمل البرمجة، الذكاء الاصطناعي، الشبكات، وأمن المعلومات، وهي محرك الابتكار في فلسطين والعالم 🌍🚀. مصطفى يتابع أحدث التقنيات ليقدم حلولاً ذكية ومفيدة لك! ✨';
         setUserInput('');
         setIsLoading(true);
 
@@ -130,9 +320,9 @@ const Chatbot: React.FC<ChatbotProps> = ({ onClose }) => {
         console.log('Search term:', searchTerm);
         console.log('Normalized term:', normalizedSearch);
 
-       // تجاهل استدعاء API الخارجي والاعتماد على المنطق المحلي مباشرة
-// هذا يضمن أن حالة الطقس ومواقيت الصلاة تعمل دائماً
-console.log('Using local logic for weather and prayer times');
+        // تجاهل استدعاء API الخارجي والاعتماد على المنطق المحلي مباشرة
+        // هذا يضمن أن حالة الطقس ومواقيت الصلاة تعمل دائماً
+        console.log('Using local logic for weather and prayer times');
 
 
         // --- Palestinian & Formal Arabic Priority Questions Logic ---
@@ -157,21 +347,18 @@ console.log('Using local logic for weather and prayer times');
             botResponseText = 'مصطفى يعمل في تطوير المواقع والتطبيقات 🌐، ويقدم خدمات الأمن السيبراني والاختراق الأخلاقي 🔐. كما أنه متخصص في البرمجة وتطوير المشاريع التقنية 💻⚡';
         }
         
-        // البرمجة - شو هي / ما هي البرمجة
-        else if ((searchTerm.includes('شو') && searchTerm.includes('البرمجة')) ||
-                 (searchTerm.includes('ماذا') && searchTerm.includes('البرمجة')) ||
-                 (searchTerm.includes('ما') && searchTerm.includes('هي') && searchTerm.includes('البرمجة')) ||
-                 (searchTerm.includes('شو') && searchTerm.includes('هي') && searchTerm.includes('البرمجة'))) {
-            botResponseText = 'البرمجة هي عملية كتابة تعليمات للحاسوب لتنفيذ مهام معينة 💻✨. مصطفى متخصص في لغات البرمجة المختلفة مثل JavaScript, Python, React وغيرها من التقنيات الحديثة 🚀⚡';
+        // البرمجة - تعريف عام بمختلف الصيغ
+        else if (isProgrammingIntent && isDefinitionIntent) {
+            botResponseText = programmingDefinitionResponse;
         }
-        
-        // الأمن السيبراني - شو هو / ما هو الأمن السيبراني
-        else if (searchTerm.includes('الأمن') && searchTerm.includes('السيبراني')) {
-            botResponseText = 'الأمن السيبراني هو حماية الأنظمة والشبكات والبرامج من الهجمات الرقمية 🛡️🔒. مصطفى متخصص في الأمن السيبراني ويقدم خدمات الاختراق الأخلاقي وفحص الثغرات الأمنية 🔍⚡';
+
+        // الأمن السيبراني - تعريف عام بمختلف الصيغ
+        else if (isCybersecurityIntent && isDefinitionIntent) {
+            botResponseText = cybersecurityDefinitionResponse;
         }
-        
-        // الأمن السيبراني بدون التعريف
-        else if (searchTerm.includes('امن سبراني') || searchTerm.includes('أمن سبراني')) {
+
+        // الأمن السيبراني بدون التعريف المباشر
+        else if (isCybersecurityIntent && includesAnyTerm(['امن سبراني', 'أمن سبراني', 'امن سيبراني', 'الامن السيبراني', 'الأمن السبراني'])) {
             botResponseText = 'الأمن السيبراني 🔐🛡️:\n\n• حماية الأنظمة والشبكات 💻🌐\n• منع الهجمات الرقمية 🚫\n• فحص الثغرات الأمنية 🔍\n• الاختراق الأخلاقي ⚡\n\nمصطفى متخصص في الأمن السيبراني! 💪✨';
         }
         
@@ -276,9 +463,9 @@ console.log('Using local logic for weather and prayer times');
             botResponseText = `يلا نلعب وننبسط! 🎮✨\n${interactivePrompt}\nجاوبني وخلي اللعبة أحلى معانا! 🤗💕`;
         }
 
-        // الهكر والاختراق
-        else if (searchTerm.includes('هكر') || searchTerm.includes('اختراق') || searchTerm.includes('هاكر') || searchTerm.includes('هاكرز')) {
-            botResponseText = 'الهكر هو شخص متخصص في البرمجة والأمن السيبراني 💻🔓. مصطفى متخصص في الاختراق الأخلاقي لحماية الأنظمة من الهجمات الضارة 🛡️⚡. هل تريد معرفة المزيد عن الحماية؟';
+        // الهكر والاختراق - تعريف عام
+        else if (isHackingIntent && isDefinitionIntent) {
+            botResponseText = hackingDefinitionResponse;
         }
         
         // الحماية من الهكر
@@ -454,10 +641,14 @@ console.log('Using local logic for weather and prayer times');
             botResponseText = 'لا تقلق! كل شخص بدأ من الصفر 😊💪:\n• ابدأ بالأساسيات البسيطة 📚\n• استخدم مصادر تعليمية سهلة 🎓\n• تدرب خطوة بخطوة 🚶‍♂️\n• لا تستعجل، التعلم يحتاج وقت ⏰\n• اسأل واستفسر دائماً ❓\n• مصطفى بدأ من الصفر وأصبح محترف! 🌟\n• المهم أن تبدأ ولا تستسلم! 💪✨';
         }
         
+        // ChatGPT ومساعدات الذكاء الاصطناعي
+        else if (mentionsChatGPT && (isDefinitionIntent || includesAnyTerm(['ماهو شات جي بي تي', 'شو هو شات جي بي تي', 'ما هو chatgpt', 'شو يعني شات جي بي تي']))) {
+            botResponseText = 'شات جي بي تي هو نموذج لغوي متقدم من OpenAI يساعدك على كتابة النصوص وفهم الأسئلة بلغات متعددة 🤖✨. نسخة مصطفى الذكية بتستخدم أفكار مشابهة عشان تجاوبك بالعربية الفصحى واللهجة الفلسطينية، وتعطيك اقتراحات تقنية وألعاب تفاعلية ممتعة 💬🎮. جرب تسألني عن الأمن السيبراني، البرمجة، أو اطلب لغز جديد وخليك مستمتع! 🚀💕';
+        }
+
         // الذكاء الاصطناعي
-        else if (searchTerm.includes('شو هو الذكاء الاصطناعي') || searchTerm.includes('ما هو الذكاء الاصطناعي') || 
-                 searchTerm.includes('شو الذكاء الاصطناعي') || searchTerm.includes('ماذا الذكاء الاصطناعي')) {
-            botResponseText = 'الذكاء الاصطناعي (AI) 🤖🧠:\n• هو محاكاة الذكاء البشري في الآلات 💻\n• يتعلم ويتحسن من التجربة 📈\n• يستخدم في التطبيقات الذكية 📱\n• يساعد في اتخاذ القرارات 🎯\n• يبسط المهام المعقدة ⚡\n• المستقبل للذكاء الاصطناعي! 🚀\n• مصطفى متخصص في تطوير تطبيقات AI! 💪✨';
+        else if (isAIIntent && isDefinitionIntent) {
+            botResponseText = aiDefinitionResponse;
         }
         
         // شو بعمل الذكاء الاصطناعي
@@ -888,7 +1079,10 @@ console.log('Using local logic for weather and prayer times');
         }
         
         // أسئلة عامة - التكنولوجيا
-        else if (searchTerm.includes('تكنولوجيا') || searchTerm.includes('تقنية') || searchTerm.includes('tech')) {
+        else if (isTechnologyIntent && isDefinitionIntent) {
+            botResponseText = technologyDefinitionResponse;
+        }
+        else if (isTechnologyIntent) {
             botResponseText = 'التكنولوجيا 📱💻:\n\n• تسرع حياتنا كل يوم! ⚡\n• البرمجة، الأمن السيبراني، AI 🤖\n• مستقبل مشرق! 🚀\n• مصطفى في صميم التكنولوجيا! 💪✨';
         }
         
