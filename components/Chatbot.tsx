@@ -46,6 +46,7 @@ const Chatbot: React.FC<ChatbotProps> = ({ onClose }) => {
     const [isRecording, setIsRecording] = useState(false);
     const [micError, setMicError] = useState<string | null>(null);
     const [suggestedQuestions, setSuggestedQuestions] = useState<string[]>(() => DEFAULT_SUGGESTIONS);
+    const [areSuggestionsCollapsed, setAreSuggestionsCollapsed] = useState(false);
     const [activeTopic, setActiveTopic] = useState<string>('general');
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const recognitionRef = useRef<SpeechRecognition | null>(null);
@@ -1110,21 +1111,35 @@ console.log('Using local logic for weather and prayer times');
 
                 <div className="p-4 border-t border-gray-700 space-y-4">
                     {suggestedQuestions.length > 0 && (
-                        <div>
-                            <p className="text-xs text-gray-400 mb-2">اقتراحات سريعة ({topicLabel})</p>
-                            <div className="flex flex-wrap gap-2">
-                                {suggestedQuestions.map((question) => (
-                                    <button
-                                        key={question}
-                                        type="button"
-                                        onClick={() => handleSuggestionClick(question)}
-                                        className="bg-gray-800 border border-cyan-600/40 hover:border-cyan-400 text-xs md:text-sm text-gray-200 px-3 py-2 rounded-full transition-colors duration-200"
-                                        disabled={isLoading}
-                                    >
-                                        {question}
-                                    </button>
-                                ))}
+                        <div className="space-y-2">
+                            <div className="flex items-center justify-between gap-2">
+                                <p className="text-xs text-gray-400">اقتراحات سريعة ({topicLabel})</p>
+                                <button
+                                    type="button"
+                                    onClick={() => setAreSuggestionsCollapsed((prev) => !prev)}
+                                    className="text-[10px] font-medium text-cyan-300 hover:text-cyan-100 transition-colors"
+                                    aria-expanded={!areSuggestionsCollapsed}
+                                    aria-label={areSuggestionsCollapsed ? 'إظهار الاقتراحات السريعة' : 'إخفاء الاقتراحات السريعة'}
+                                >
+                                    {areSuggestionsCollapsed ? 'إظهار' : 'إخفاء'}
+                                </button>
                             </div>
+                            {!areSuggestionsCollapsed && (
+                                <div className="flex gap-2 overflow-x-auto pb-1 -mr-2 pr-2 rtl:pr-0 rtl:-ml-2 rtl:pl-2">
+                                    {suggestedQuestions.map((question) => (
+                                        <button
+                                            key={question}
+                                            type="button"
+                                            onClick={() => handleSuggestionClick(question)}
+                                            className="shrink-0 bg-gray-800 border border-cyan-600/40 hover:border-cyan-400 text-[11px] md:text-xs text-gray-200 px-3 py-2 rounded-full transition-colors duration-200 whitespace-nowrap max-w-[220px] overflow-hidden text-ellipsis text-left"
+                                            disabled={isLoading}
+                                            title={question}
+                                        >
+                                            {question}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     )}
 
