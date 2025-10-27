@@ -1,0 +1,263 @@
+/* ملف CSS للتصميم العام */
+body {
+    font-family: 'Cairo', sans-serif;
+    scroll-behavior: smooth;
+}
+
+.text-glow {
+    text-shadow: 0 0 3px #05fdd8, 0 0 6px #05fdd8, 0 0 12px #05fdd8;
+}
+
+/* تصميم الشات بوت */
+.chatbot-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 400px;
+    height: 600px;
+    background: rgba(17, 24, 39, 0.95);
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(6, 182, 212, 0.3);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.chatbot-header {
+    background: linear-gradient(135deg, #06b6d4, #0891b2);
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: white;
+}
+
+.chatbot-messages {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.message {
+    max-width: 80%;
+    padding: 12px 16px;
+    border-radius: 18px;
+    word-wrap: break-word;
+    line-height: 1.4;
+}
+
+.message.user {
+    background: linear-gradient(135deg, #06b6d4, #0891b2);
+    color: white;
+    align-self: flex-end;
+    margin-left: auto;
+}
+
+.message.bot {
+    background: rgba(55, 65, 81, 0.8);
+    color: #e5e7eb;
+    align-self: flex-start;
+    margin-right: auto;
+}
+
+.chatbot-input {
+    padding: 20px;
+    border-top: 1px solid rgba(55, 65, 81, 0.5);
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.chatbot-input input {
+    flex: 1;
+    padding: 12px 16px;
+    background: rgba(55, 65, 81, 0.5);
+    border: 1px solid rgba(107, 114, 128, 0.3);
+    border-radius: 25px;
+    color: white;
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+.chatbot-input input:focus {
+    border-color: #06b6d4;
+    box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.1);
+}
+
+.chatbot-input button {
+    padding: 12px 20px;
+    background: linear-gradient(135deg, #06b6d4, #0891b2);
+    color: white;
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 600;
+}
+
+.chatbot-input button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(6, 182, 212, 0.4);
+}
+
+.chatbot-input button:disabled {
+    background: rgba(107, 114, 128, 0.5);
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* تصميم الزر العائم */
+.floating-button {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #06b6d4, #0891b2);
+    border: none;
+    border-radius: 50%;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    box-shadow: 0 10px 30px rgba(6, 182, 212, 0.4);
+    transition: all 0.3s ease;
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.floating-button:hover {
+    transform: translateY(-5px) scale(1.1);
+    box-shadow: 0 15px 40px rgba(6, 182, 212, 0.6);
+}
+
+/* تصميم التيرمينال */
+.terminal-container {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80%;
+    max-width: 800px;
+    height: 70%;
+    background: rgba(0, 0, 0, 0.95);
+    border-radius: 15px;
+    border: 2px solid #06b6d4;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.terminal-header {
+    background: #1a1a1a;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #333;
+}
+
+.terminal-content {
+    flex: 1;
+    padding: 20px;
+    font-family: 'Courier New', monospace;
+    color: #00ff00;
+    overflow-y: auto;
+    background: #000;
+}
+
+.terminal-input {
+    padding: 20px;
+    border-top: 1px solid #333;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    background: #1a1a1a;
+}
+
+.terminal-input input {
+    flex: 1;
+    padding: 10px;
+    background: transparent;
+    border: none;
+    color: #00ff00;
+    font-family: 'Courier New', monospace;
+    outline: none;
+}
+
+.terminal-input button {
+    padding: 10px 20px;
+    background: #06b6d4;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+/* تصميم متجاوب */
+@media (max-width: 768px) {
+    .chatbot-container {
+        width: 90%;
+        height: 80%;
+        bottom: 10px;
+        right: 10px;
+    }
+    
+    .terminal-container {
+        width: 95%;
+        height: 80%;
+    }
+    
+    .floating-button {
+        bottom: 20px;
+        right: 20px;
+        width: 50px;
+        height: 50px;
+        font-size: 20px;
+    }
+}
+
+/* تأثيرات الحركة */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease-out;
+}
+
+/* تصميم التمرير */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(55, 65, 81, 0.3);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(6, 182, 212, 0.6);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(6, 182, 212, 0.8);
+}

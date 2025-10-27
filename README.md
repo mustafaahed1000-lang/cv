@@ -1,20 +1,74 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# مصطفى أمريش - Personal Portfolio
 
-# Run and deploy your AI Studio app
+موقع شخصي احترافي لمصطفى أمريش يعرض مهاراته وخبراته في البرمجة والأمن السيبراني.
 
-This contains everything you need to run your app locally.
+## 🌟 المميزات
 
-View your app in AI Studio: https://ai.studio/apps/drive/1gqxSyJGxZV8owdr1FUFZCCbSoO635OSJ
+- **صفحة شخصية تفاعلية** تعرض معلومات عن مصطفى
+- **شات بوت ذكي** بأكثر من 100 نوع سؤال
+- **ألعاب تفاعلية** للترفيه والتعلم
+- **سيرة ذاتية تفاعلية** على شكل Terminal
+- **تصميم عصري وجذاب** بألوان زرقاء سمائية
 
-## Run Locally
+## 🎯 التقنيات المستخدمة
 
-**Prerequisites:**  Node.js
+- **React** - مكتبة واجهة المستخدم
+- **TypeScript** - لغة البرمجة
+- **Vite** - أداة البناء
+- **Tailwind CSS** - تصميم الواجهة
+- **Express** - الخادم الخلفي (للشات بوت)
 
+## 🚀 التشغيل
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+```bash
+# تثبيت التبعيات
+npm install
+
+# تشغيل الواجهة الأمامية
+npm run dev
+
+# بناء المشروع للإنتاج
+npm run build
+```
+
+## 💬 الشات بوت الذكي
+
+الشات بوت يدعم الأسئلة التالية:
+
+### معلومات شخصية
+- معلومات عن مصطفى أمريش
+- مهاراته وخبراته
+- جامعة القدس المفتوحة
+- مشاريعه واهتماماته
+
+### تعليمية
+- البرمجة والتطوير
+- الأمن السيبراني
+- قواعد البيانات
+- الذكاء الاصطناعي
+
+### تقنية
+- أنواع الهجمات السيبرانية
+- الحماية من الاختراق
+- الديب ويب والدارك ويب
+- الشبكات والأمن
+
+### تفاعلية
+- محادثة ودية
+- دعم نفسي
+- نصائح للنجاح
+- مواقيت الصلاة والطقس
+
+## 📞 التواصل
+
+- **البريد الإلكتروني**: عبر صفحة الاتصال في الموقع
+- **LinkedIn**: [LinkIn Profile](https://linkedin.com)
+- **GitHub**: [GitHub Profile](https://github.com)
+
+## 📜 الترخيص
+
+© 2024 مصطفى عاهد أمريش. جميع الحقوق محفوظة.
+
+## 🙏 شكراً
+
+شكراً لزيارتك موقعي! أتمنى أن تستمتع بالتجربة. 🚀✨
